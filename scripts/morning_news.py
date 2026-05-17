@@ -4,17 +4,14 @@ and appends it to today's Logseq journal page in natural Japanese.
 """
 
 import os
-import json
 import datetime
 from pathlib import Path
 
-import google.generativeai as genai
-from google.generativeai.types import Tool, GoogleSearchRetrieval
+from google import genai
+from google.genai import types
 
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 GRAPH_DIR = Path(os.environ.get("LOGSEQ_GRAPH_DIR", Path(__file__).parent.parent))
-
-genai.configure(api_key=GEMINI_API_KEY)
 
 
 def get_journal_path() -> Path:
@@ -26,11 +23,7 @@ def get_journal_path() -> Path:
 
 
 def fetch_news() -> str:
-    model = genai.GenerativeModel(
-        model_name="gemini-2.0-flash",
-        tools=[Tool(google_search=GoogleSearchRetrieval())],
-    )
-
+    client = genai.Client(api_key=GEMINI_API_KEY)
     today_str = datetime.date.today().strftime("%Y年%m月%d日")
 
     prompt = f"""
@@ -63,7 +56,13 @@ Logseqのジャーナルページに追記するMarkdown形式で書いてくだ
 上記フォーマットのみ出力してください。前置きや説明は不要です。
 """
 
-    response = model.generate_content(prompt)
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            tools=[types.Tool(google_search=types.GoogleSearch())],
+        ),
+    )
     return response.text.strip()
 
 
@@ -76,7 +75,7 @@ def append_to_journal(news_text: str):
 
     existing = path.read_text(encoding="utf-8") if path.exists() else ""
 
-    # Avoid duplicate entries if script is run twice
+    # Avoid duplicate entries if script is run twice in the same day
     if "おはようニュース" in existing and today_str in existing:
         print(f"Today's news already written to {path}. Skipping.")
         return
@@ -88,6 +87,10 @@ def append_to_journal(news_text: str):
 
 
 if __name__ == "__main__":
+    import sys
+    # Ensure UTF-8 output on Windows
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
     print("Fetching news from Gemini...")
     news = fetch_news()
     print("--- Generated content ---")
