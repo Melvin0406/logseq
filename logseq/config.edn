@@ -12,4 +12,5 @@
 
  :ui/enable-tooltip? true
 
- :default-home {:page "journals"}}
+ :default-home {:page "journals"}
+ :favorites []}
