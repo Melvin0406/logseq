@@ -144,11 +144,25 @@ Logseqのジャーナルページに追記するMarkdown形式で書いてくだ
     return response.text.strip()
 
 
+DIARY_BOILERPLATE = """\
+## 📔 今日の日記
+
+**天気：**
+**気分：**
+
+今日は
+
+---
+
+**今日の一言（印象に残った表現・単語）：**
+"""
+
+
 def append_to_journal(news_text: str) -> Path:
     path = get_journal_path()
     today_str = datetime.date.today().strftime("%Y年%m月%d日")
     header = f"## 🌅 おはようニュース — {today_str}\n"
-    block = f"\n{header}\n{news_text}\n"
+    block = f"\n{header}\n{news_text}\n\n{DIARY_BOILERPLATE}"
 
     existing = path.read_text(encoding="utf-8") if path.exists() else ""
 
