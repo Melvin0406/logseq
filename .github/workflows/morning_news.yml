@@ -2,8 +2,8 @@ name: 朝のニュース自動更新
 
 on:
   schedule:
-    # 7:00 AM JST = 22:00 UTC (previous day)
-    - cron: "0 22 * * *"
+    # 7:00 AM PDT (Tijuana) = 14:00 UTC  [PDT = UTC-7, Nov-Mar use 15:00 UTC for PST]
+    - cron: "0 14 * * *"
   workflow_dispatch: # allow manual trigger from GitHub UI
 
 jobs:
