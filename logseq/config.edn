@@ -1,0 +1,15 @@
+{:meta/version 1
+
+ :preferred-format :markdown
+
+ :journal/page-title-format "yyyy_MM_dd"
+
+ :journal-file-name-format "yyyy_MM_dd"
+
+ :feature/enable-journals? true
+
+ :feature/enable-flashcards? false
+
+ :ui/enable-tooltip? true
+
+ :default-home {:page "journals"}}
