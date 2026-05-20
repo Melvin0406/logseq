@@ -10,9 +10,10 @@ import datetime
 import webbrowser
 from pathlib import Path
 
+import time
 import markdown as md
 from google import genai
-from google.genai import types
+from google.genai import types, errors
 
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 GRAPH_DIR = Path(os.environ.get("LOGSEQ_GRAPH_DIR", Path(__file__).parent.parent))
@@ -134,14 +135,23 @@ Logseqのジャーナルページに追記するMarkdown形式で書いてくだ
 上記フォーマットのみ出力してください。前置きや説明は不要です。
 """
 
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            tools=[types.Tool(google_search=types.GoogleSearch())],
-        ),
-    )
-    return response.text.strip()
+    # Retry up to 4 times on 503 (model overloaded), with exponential backoff
+    for attempt in range(4):
+        try:
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    tools=[types.Tool(google_search=types.GoogleSearch())],
+                ),
+            )
+            return response.text.strip()
+        except errors.ServerError as e:
+            if attempt == 3:
+                raise
+            wait = 15 * (2 ** attempt)  # 15s, 30s, 60s
+            print(f"Gemini 503 on attempt {attempt + 1}, retrying in {wait}s...")
+            time.sleep(wait)
 
 
 DIARY_BOILERPLATE = """\
